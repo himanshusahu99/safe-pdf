@@ -1,0 +1,38 @@
+.footer {
+    margin-top: auto;
+    border-top: var(--glass-border);
+    background: rgba(15, 23, 42, 0.5);
+    backdrop-filter: blur(8px);
+    padding: var(--space-2xl) var(--space-lg);
+}
+
+.footerInner {
+    max-width: var(--max-width);
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-md);
+    text-align: center;
+}
+
+.privacyMessage {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    background: rgba(34, 197, 94, 0.08);
+    border: 1px solid rgba(34, 197, 94, 0.15);
+    border-radius: var(--radius-md);
+    padding: var(--space-sm) var(--space-md);
+    font-size: var(--font-size-sm);
+    color: var(--color-success);
+}
+
+.shieldIcon {
+    font-size: 16px;
+}
+
+.copyright {
+    font-size: var(--font-size-xs);
+    color: var(--color-text-dim);
+}

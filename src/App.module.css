@@ -1,0 +1,14 @@
+.app {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.loadingFallback {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 50vh;
+    color: var(--color-text-muted);
+    font-size: var(--font-size-base);
+}
