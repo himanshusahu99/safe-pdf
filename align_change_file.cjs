@@ -25,7 +25,7 @@ const walk = function (dir, done) {
     });
 };
 
-walk('d:/safepdf/src/tools', function (err, results) {
+walk('d:/love-pdf/src/tools', function (err, results) {
     if (err) throw err;
     results.forEach(file => {
         let content = fs.readFileSync(file, 'utf8');

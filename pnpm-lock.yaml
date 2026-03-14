@@ -2566,7 +2566,7 @@ snapshots:
       inherits: 2.0.4
       isarray: 1.0.0
       process-nextick-args: 2.0.1
-      safebuffer: 5.1.2
+      safe-buffer: 5.1.2
       string_decoder: 1.1.1
       util-deprecate: 1.0.2
 
@@ -2599,7 +2599,7 @@ snapshots:
       '@rolldown/binding-win32-arm64-msvc': 1.0.0-rc.9
       '@rolldown/binding-win32-x64-msvc': 1.0.0-rc.9
 
-  safebuffer@5.1.2: {}
+  safe-buffer@5.1.2: {}
 
   sax@1.5.0: {}
 
@@ -2636,7 +2636,7 @@ snapshots:
 
   string_decoder@1.1.1:
     dependencies:
-      safebuffer: 5.1.2
+      safe-buffer: 5.1.2
 
   strip-json-comments@3.1.1: {}
 
