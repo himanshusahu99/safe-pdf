@@ -1,7 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 
-const toolsDir = 'd:/love-pdf/src/tools';
+const toolsDir = 'd:/safepdf/src/tools';
 
 const walk = function (dir, done) {
     let results = [];

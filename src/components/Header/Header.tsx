@@ -7,7 +7,7 @@ export default function Header() {
       <div className={styles.headerInner}>
         <Link to="/" className={styles.logo}>
           <span className={styles.logoIcon}>📄</span>
-          <span className={styles.logoText}>Love</span>
+          <span className={styles.logoText}>Safe</span>
           <span className={styles.logoAccent}>PDF</span>
         </Link>
         <nav className={styles.nav}>

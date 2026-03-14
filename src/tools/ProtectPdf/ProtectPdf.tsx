@@ -34,7 +34,7 @@ export default function ProtectPdf() {
       // We'll add password as document metadata + author marking,
       // and embed the password requirement in the PDF info.
       doc.setTitle(doc.getTitle() || file.name.replace('.pdf', ''));
-      doc.setProducer('LovePDF - Protected');
+      doc.setProducer('SafePDF - Protected');
       doc.setKeywords([`protected:${password}`]);
 
       // Set the document as non-modifiable by adding the metadata

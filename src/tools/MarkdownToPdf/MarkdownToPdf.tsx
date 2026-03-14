@@ -11,7 +11,7 @@ import DOMPurify from 'dompurify';
 // @ts-ignore - html2pdf doesn't have great TS types
 import html2pdf from 'html2pdf.js';
 
-const INITIAL_MD = `# Welcome to love-pdf Markdown Editor
+const INITIAL_MD = `# Welcome to safe-pdf Markdown Editor
 
 Write your **Markdown** here! It renders instantly on the right.
 

@@ -27,7 +27,7 @@ const walk = function (dir, done) {
 
 const buttonHtml = `\n              <button onClick={() => window.location.reload()} style={{ background: "transparent", border: "1px solid var(--color-border)", borderRadius: 'var(--radius-md)', padding: '12px 20px', color: "var(--color-text)", cursor: 'pointer', fontWeight: 500, fontSize: '14px' }}>Upload New File</button>`;
 
-walk('d:/love-pdf/src/tools', function (err, results) {
+walk('d:/safepdf/src/tools', function (err, results) {
     if (err) throw err;
     results.forEach(file => {
         let content = fs.readFileSync(file, 'utf8');

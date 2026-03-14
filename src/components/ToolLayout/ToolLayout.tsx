@@ -15,9 +15,9 @@ export default function ToolLayout({ title, description, icon, color, error, chi
   return (
     <div className={styles.layout}>
       <Helmet>
-        <title>{title} | Love-PDF</title>
+        <title>{title} | Safe-PDF</title>
         <meta name="description" content={description} />
-        <meta property="og:title" content={`${title} | Love-PDF`} />
+        <meta property="og:title" content={`${title} | safePDF`} />
         <meta property="og:description" content={description} />
       </Helmet>
       <div className={styles.topBar}>

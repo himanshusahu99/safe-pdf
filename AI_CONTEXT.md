@@ -1,7 +1,7 @@
-# Project Context: Love-PDF
+# Project Context: safePDF
 
 ## Overview
-Love-PDF is a pure client-side PDF processing and conversion web application built with React, Vite, TypeScript, and Zustand. 
+safePDF is a pure client-side PDF processing and conversion web application built with React, Vite, TypeScript, and Zustand. 
 **Core Value Proposition:** 100% Privacy. All PDF processing and file conversions happen entirely inside the user's browser without ever sending files to a backend server.
 
 ## Architecture

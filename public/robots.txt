@@ -2,4 +2,4 @@ User-agent: *
 Allow: /
 
 # Sitemap
-Sitemap: https://love-pdf.com/sitemap.xml
+Sitemap: https://safepdf.in/sitemap.xml

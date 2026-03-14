@@ -9,7 +9,7 @@ export default function Footer() {
           All processing happens in your browser. Your files never leave your device.
         </div>
         <p className={styles.copyright}>
-          © {new Date().getFullYear()} LovePDF — Privacy-first PDF tools. Built with ❤️
+          © {new Date().getFullYear()} safePDF — Privacy-first PDF tools. Built with ❤️
         </p>
       </div>
     </footer>

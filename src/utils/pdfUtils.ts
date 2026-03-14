@@ -208,7 +208,7 @@ export async function protectPdf(
   const arrayBuffer = await file.arrayBuffer();
   const doc = await PDFDocument.load(arrayBuffer, { ignoreEncryption: true });
   doc.setTitle('Protected Document');
-  doc.setProducer('LovePDF - Privacy First PDF Tools');
+  doc.setProducer('SafePDF - Privacy First PDF Tools');
   return doc.save();
 }
 

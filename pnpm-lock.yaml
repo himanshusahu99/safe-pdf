@@ -1236,7 +1236,7 @@ packages:
     engines: {node: ^20.19.0 || >=22.12.0}
     hasBin: true
 
-  safe-buffer@5.1.2:
+  safebuffer@5.1.2:
     resolution: {integrity: sha512-Gd2UZBJDkXlY7GbJxfsE8/nvKkUEU1G38c1siN6QP6a9PT9MmHB8GnpscSmMJSoF8LOIrt8ud/wPtojys4G6+g==}
 
   sax@1.5.0:
@@ -2566,7 +2566,7 @@ snapshots:
       inherits: 2.0.4
       isarray: 1.0.0
       process-nextick-args: 2.0.1
-      safe-buffer: 5.1.2
+      safebuffer: 5.1.2
       string_decoder: 1.1.1
       util-deprecate: 1.0.2
 
@@ -2599,7 +2599,7 @@ snapshots:
       '@rolldown/binding-win32-arm64-msvc': 1.0.0-rc.9
       '@rolldown/binding-win32-x64-msvc': 1.0.0-rc.9
 
-  safe-buffer@5.1.2: {}
+  safebuffer@5.1.2: {}
 
   sax@1.5.0: {}
 
@@ -2636,7 +2636,7 @@ snapshots:
 
   string_decoder@1.1.1:
     dependencies:
-      safe-buffer: 5.1.2
+      safebuffer: 5.1.2
 
   strip-json-comments@3.1.1: {}
 
