@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react';
 import { renderPageToCanvas } from '../../utils/renderUtils';
 import styles from './PageSelector.module.css';
 
+const CHUNK_SIZE = 10;
+
 interface PageAction {
   icon: string;
   title: string;
@@ -29,19 +31,61 @@ export default function PageSelector({
   actions,
   pageRotations,
 }: PageSelectorProps) {
+  // Central thumbnail map: null = loading, string = data URL
+  const [thumbnails, setThumbnails] = useState<Record<number, string | null>>(() => {
+    const initial: Record<number, string | null> = {};
+    for (let i = 1; i <= pageCount; i++) initial[i] = null;
+    return initial;
+  });
+
+  useEffect(() => {
+    let cancelled = false;
+    const allPages = Array.from({ length: pageCount }, (_, i) => i + 1);
+
+    const loadChunk = async (chunk: number[]) => {
+      for (const pageNum of chunk) {
+        if (cancelled) return;
+        try {
+          const url = await renderPageToCanvas(file, pageNum, 0.4);
+          if (!cancelled) {
+            setThumbnails(prev => ({ ...prev, [pageNum]: url }));
+          }
+        } catch {
+          if (!cancelled) {
+            setThumbnails(prev => ({ ...prev, [pageNum]: '' }));
+          }
+        }
+      }
+    };
+
+    const runAll = async () => {
+      for (let i = 0; i < allPages.length; i += CHUNK_SIZE) {
+        if (cancelled) return;
+        const chunk = allPages.slice(i, i + CHUNK_SIZE);
+        await loadChunk(chunk);
+      }
+    };
+
+    runAll();
+    return () => { cancelled = true; };
+  }, [file, pageCount]);
+
   return (
     <div>
       <div className={styles.toolbar}>
-        <button className={styles.selectAll} onClick={onSelectAll}>☑️ Select All</button>
-        <button className={styles.deselectAll} onClick={onDeselectAll}>☐ Deselect All</button>
+        {selectedPages.length === pageCount ? (
+          <button className={styles.deselectAll} onClick={onDeselectAll}>☐ Deselect All</button>
+        ) : (
+          <button className={styles.selectAll} onClick={onSelectAll}>☑️ Select All</button>
+        )}
         <span className={styles.count}>{selectedPages.length} of {pageCount} selected</span>
       </div>
       <div className={styles.grid}>
         {Array.from({ length: pageCount }, (_, i) => i + 1).map(pageNum => (
           <PageCard
             key={pageNum}
-            file={file}
             pageNumber={pageNum}
+            thumbnail={thumbnails[pageNum]}
             selected={selectedPages.includes(pageNum)}
             onToggle={() => onTogglePage(pageNum)}
             actions={actions}
@@ -54,25 +98,15 @@ export default function PageSelector({
 }
 
 interface PageCardProps {
-  file: File;
   pageNumber: number;
+  thumbnail: string | null | undefined;
   selected: boolean;
   onToggle: () => void;
   actions?: PageAction[];
   rotation?: number;
 }
 
-function PageCard({ file, pageNumber, selected, onToggle, actions, rotation }: PageCardProps) {
-  const [thumbnail, setThumbnail] = useState<string | null>(null);
-
-  useEffect(() => {
-    let cancelled = false;
-    renderPageToCanvas(file, pageNumber, 0.4).then(url => {
-      if (!cancelled) setThumbnail(url);
-    }).catch(() => {});
-    return () => { cancelled = true; };
-  }, [file, pageNumber]);
-
+function PageCard({ pageNumber, thumbnail, selected, onToggle, actions, rotation }: PageCardProps) {
   return (
     <div
       className={`${styles.pageCard} ${selected ? styles.selected : styles.unselected}`}
@@ -86,7 +120,9 @@ function PageCard({ file, pageNumber, selected, onToggle, actions, rotation }: P
           style={rotation ? { transform: `rotate(${rotation}deg)` } : undefined}
         />
       ) : (
-        <div className={styles.placeholder}>Loading...</div>
+        <div className={styles.placeholder}>
+          {thumbnail === '' ? 'Error' : 'Loading…'}
+        </div>
       )}
       <span className={styles.pageNumber}>{pageNumber}</span>
       {selected && <div className={styles.checkmark}>✓</div>}

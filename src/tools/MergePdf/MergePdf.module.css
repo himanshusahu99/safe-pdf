@@ -101,3 +101,142 @@
     align-items: center;
     gap: var(--space-sm);
 }
+
+/* ── Accordion file list ── */
+.fileList {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+}
+
+.card {
+    background: var(--glass-bg);
+    border: var(--glass-border);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    transition: box-shadow var(--transition-fast);
+}
+
+.card.dragging {
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.15);
+    border-color: var(--color-accent);
+}
+
+.cardHeader {
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+    padding: var(--space-md);
+    user-select: none;
+}
+
+.cardHeader:hover {
+    background: var(--color-bg-card-hover);
+}
+
+.dragHandle {
+    color: var(--color-text-dim);
+    font-size: 18px;
+    flex-shrink: 0;
+}
+
+.fileIcon {
+    width: 40px;
+    height: 40px;
+    background: rgba(99, 102, 241, 0.15);
+    border-radius: var(--radius-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    flex-shrink: 0;
+}
+
+.fileInfo {
+    flex: 1;
+    min-width: 0;
+}
+
+.fileName {
+    font-size: var(--font-size-sm);
+    font-weight: 500;
+    color: var(--color-text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin: 0;
+}
+
+.fileMeta {
+    font-size: var(--font-size-xs);
+    color: var(--color-text-muted);
+    margin: 2px 0 0;
+}
+
+.cardActions {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    flex-shrink: 0;
+}
+
+.expandBtn {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: var(--glass-bg);
+    border: var(--glass-border);
+    border-radius: var(--radius-sm);
+    padding: 5px 12px;
+    font-size: var(--font-size-xs);
+    font-weight: 500;
+    color: var(--color-text-muted);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.expandBtn:hover,
+.expandBtnOpen {
+    background: rgba(99, 102, 241, 0.1);
+    color: var(--color-accent);
+    border-color: rgba(99, 102, 241, 0.3);
+}
+
+.removeBtn {
+    width: 30px;
+    height: 30px;
+    border-radius: var(--radius-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    color: var(--color-text-dim);
+    transition: all var(--transition-fast);
+    background: transparent;
+    border: none;
+    cursor: pointer;
+}
+
+.removeBtn:hover {
+    background: rgba(239, 68, 68, 0.1);
+    color: var(--color-danger);
+}
+
+.accordionBody {
+    border-top: 1px solid var(--color-border);
+    padding: var(--space-md) var(--space-lg);
+    background: var(--color-bg-page);
+    animation: slideDown 0.2s ease-out;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-6px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}

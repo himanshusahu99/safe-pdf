@@ -1,13 +1,21 @@
-import { PDFDocument, degrees, rgb, StandardFonts, type PDFPage } from 'pdf-lib';
+import { PDFDocument, degrees, rgb, StandardFonts } from 'pdf-lib';
 
-export async function mergePdfs(files: File[]): Promise<Uint8Array> {
+export async function mergePdfs(items: { file: File; pages?: number[] }[]): Promise<Uint8Array> {
   const mergedDoc = await PDFDocument.create();
 
-  for (const file of files) {
-    const arrayBuffer = await file.arrayBuffer();
+  for (const item of items) {
+    const arrayBuffer = await item.file.arrayBuffer();
     const doc = await PDFDocument.load(arrayBuffer, { ignoreEncryption: true });
-    const pages = await mergedDoc.copyPages(doc, doc.getPageIndices());
-    pages.forEach(page => mergedDoc.addPage(page));
+    
+    // Convert 1-based page numbers to 0-based indices, or use all pages
+    const indicesToCopy = item.pages 
+      ? item.pages.map(p => p - 1).filter(i => i >= 0 && i < doc.getPageCount())
+      : doc.getPageIndices();
+
+    if (indicesToCopy.length > 0) {
+      const pagesToCopy = await mergedDoc.copyPages(doc, indicesToCopy);
+      pagesToCopy.forEach(page => mergedDoc.addPage(page));
+    }
   }
 
   return mergedDoc.save();
@@ -100,9 +108,9 @@ export async function sortPages(
 export async function addWatermark(
   file: File,
   text: string,
-  options: { fontSize?: number; opacity?: number; rotation?: number; color?: string; fontWeight?: 'normal' | 'bold' } = {}
+  options: { fontSize?: number; opacity?: number; rotation?: number; color?: string; fontWeight?: 'normal' | 'bold', placement?: 'center' | 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right' | 'top-center' | 'bottom-center', pageIndices?: number[] } = {}
 ): Promise<Uint8Array> {
-  const { fontSize = 50, opacity = 0.3, rotation = -45, color = '#888888', fontWeight = 'bold' } = options;
+  const { fontSize = 50, opacity = 0.3, rotation = -45, color = '#888888', fontWeight = 'bold', placement = 'center', pageIndices } = options;
   const arrayBuffer = await file.arrayBuffer();
   const doc = await PDFDocument.load(arrayBuffer, { ignoreEncryption: true });
   const font = await doc.embedFont(fontWeight === 'bold' ? StandardFonts.HelveticaBold : StandardFonts.Helvetica);
@@ -113,13 +121,33 @@ export async function addWatermark(
   const g = parseInt(hex.substring(2, 4), 16) / 255;
   const b = parseInt(hex.substring(4, 6), 16) / 255;
 
-  const pages = doc.getPages();
+  const allPages = doc.getPages();
+  const pages = pageIndices ? pageIndices.map(i => allPages[i]).filter(Boolean) : allPages;
   for (const page of pages) {
     const { width, height } = page.getSize();
     const textWidth = font.widthOfTextAtSize(text, fontSize);
+    const textHeight = font.heightAtSize(fontSize);
+
+    let x = (width - textWidth) / 2;
+    let y = height / 2;
+
+    switch (placement) {
+      case 'top-left': x = 40; y = height - textHeight - 40; break;
+      case 'top-right': x = width - textWidth - 40; y = height - textHeight - 40; break;
+      case 'bottom-left': x = 40; y = 40 + textHeight; break;
+      case 'bottom-right': x = width - textWidth - 40; y = 40 + textHeight; break;
+      case 'top-center': x = (width - textWidth) / 2; y = height - textHeight - 40; break;
+      case 'bottom-center': x = (width - textWidth) / 2; y = 40 + textHeight; break;
+      case 'center': 
+      default: 
+        x = (width - textWidth) / 2; 
+        y = height / 2; 
+        break;
+    }
+
     page.drawText(text, {
-      x: (width - textWidth) / 2,
-      y: height / 2,
+      x,
+      y,
       size: fontSize,
       font,
       color: rgb(r, g, b),
@@ -134,45 +162,45 @@ export async function addWatermark(
 export async function addPageNumbers(
   file: File,
   position: string = 'bottom-center',
-  startFrom: number = 1
+  startFrom: number = 1,
+  pageIndices?: number[]
 ): Promise<Uint8Array> {
   const arrayBuffer = await file.arrayBuffer();
   const doc = await PDFDocument.load(arrayBuffer, { ignoreEncryption: true });
   const font = await doc.embedFont(StandardFonts.Helvetica);
 
-  const pages = doc.getPages();
-  pages.forEach((page: PDFPage, index: number) => {
+  const allPages = doc.getPages();
+  const pagesToNumber = pageIndices
+    ? pageIndices.map(i => allPages[i]).filter(Boolean)
+    : allPages;
+
+  pagesToNumber.forEach((page, seqIdx) => {
     const { width, height } = page.getSize();
-    const pageNum = `${index + startFrom}`;
+    const pageNum = `${seqIdx + startFrom}`;
     const textWidth = font.widthOfTextAtSize(pageNum, 12);
 
     let x: number;
     let y: number;
 
-    // X position
     if (position.includes('center')) x = (width - textWidth) / 2;
     else if (position.includes('right')) x = width - textWidth - 40;
     else x = 40;
 
-    // Y position
     if (position.startsWith('top')) y = height - 30;
     else y = 30;
 
-    page.drawText(pageNum, {
-      x,
-      y,
-      size: 12,
-      font,
-      color: rgb(0, 0, 0),
-    });
+    page.drawText(pageNum, { x, y, size: 12, font, color: rgb(0, 0, 0) });
   });
 
   return doc.save();
 }
 
-export async function flattenPdf(file: File): Promise<Uint8Array> {
+
+export async function flattenPdf(file: File, pageIndices?: number[]): Promise<Uint8Array> {
   const arrayBuffer = await file.arrayBuffer();
   const doc = await PDFDocument.load(arrayBuffer, { ignoreEncryption: true });
+  // pdf-lib flattens form fields globally; pageIndices is reserved for future partial flatten support
+  void pageIndices;
   const form = doc.getForm();
   form.flatten();
   return doc.save();
@@ -180,13 +208,15 @@ export async function flattenPdf(file: File): Promise<Uint8Array> {
 
 export async function cropPdf(
   file: File,
-  margins: { top: number; right: number; bottom: number; left: number }
+  margins: { top: number; right: number; bottom: number; left: number },
+  pageIndices?: number[]
 ): Promise<Uint8Array> {
   const arrayBuffer = await file.arrayBuffer();
   const doc = await PDFDocument.load(arrayBuffer, { ignoreEncryption: true });
 
-  const pages = doc.getPages();
-  for (const page of pages) {
+  const allPages = doc.getPages();
+  const pagesToCrop = pageIndices ? pageIndices.map(i => allPages[i]).filter(Boolean) : allPages;
+  for (const page of pagesToCrop) {
     const { width, height } = page.getSize();
     page.setCropBox(
       margins.left,

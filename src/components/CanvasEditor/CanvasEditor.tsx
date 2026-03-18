@@ -1,7 +1,7 @@
 import { useRef, useState, useCallback, useEffect } from 'react';
 import styles from './CanvasEditor.module.css';
 
-export type EditorMode = 'draw' | 'type';
+export type EditorMode = 'draw' | 'type' | 'image';
 type DrawTool = 'pen' | 'eraser';
 
 const FONTS = [
@@ -35,6 +35,16 @@ export default function CanvasEditor({
   const [typedText, setTypedText] = useState('');
   const [selectedFont, setSelectedFont] = useState(FONTS[0].name);
   const historyRef = useRef<ImageData[]>([]);
+  const [uploadedImage, setUploadedImage] = useState<string | null>(null);
+  const [saveToLocal, setSaveToLocal] = useState(false);
+
+  useEffect(() => {
+    const saved = localStorage.getItem('saved_signature');
+    if (saved) {
+      setUploadedImage(saved);
+      setMode('image');
+    }
+  }, []);
 
   // Load Google Fonts
   useEffect(() => {
@@ -157,7 +167,9 @@ export default function CanvasEditor({
           ctx.textAlign = 'center';
           ctx.textBaseline = 'middle';
           ctx.fillText(typedText, width / 2, height / 2);
-          onExport(tempCanvas.toDataURL('image/png'));
+          const out = tempCanvas.toDataURL('image/png');
+          if (saveToLocal) localStorage.setItem('saved_signature', out);
+          onExport(out);
         };
         img.src = backgroundImage;
         return;
@@ -167,10 +179,19 @@ export default function CanvasEditor({
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       ctx.fillText(typedText, width / 2, height / 2);
-      onExport(tempCanvas.toDataURL('image/png'));
+      const out = tempCanvas.toDataURL('image/png');
+      if (saveToLocal) localStorage.setItem('saved_signature', out);
+      onExport(out);
+    } else if (mode === 'image' && uploadedImage) {
+      if (saveToLocal) localStorage.setItem('saved_signature', uploadedImage);
+      onExport(uploadedImage);
     } else {
       const canvas = canvasRef.current;
-      if (canvas) onExport(canvas.toDataURL('image/png'));
+      if (canvas) {
+        const out = canvas.toDataURL('image/png');
+        if (saveToLocal) localStorage.setItem('saved_signature', out);
+        onExport(out);
+      }
     }
   };
 
@@ -180,6 +201,7 @@ export default function CanvasEditor({
         <div className={styles.tabs}>
           <button className={`${styles.tab} ${mode === 'draw' ? styles.tabActive : ''}`} onClick={() => setMode('draw')}>✏️ Draw</button>
           <button className={`${styles.tab} ${mode === 'type' ? styles.tabActive : ''}`} onClick={() => setMode('type')}>⌨️ Type</button>
+          <button className={`${styles.tab} ${mode === 'image' ? styles.tabActive : ''}`} onClick={() => setMode('image')}>📁 Image</button>
         </div>
       )}
 
@@ -237,6 +259,35 @@ export default function CanvasEditor({
           )}
         </>
       )}
+
+      {mode === 'image' && (
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '160px', border: '2px dashed var(--color-border)', borderRadius: 'var(--radius-md)', padding: '24px', position: 'relative'} }>
+          {uploadedImage ? (
+            <>
+              <img src={uploadedImage} alt="Signature Upload" style={{ maxHeight: '120px', maxWidth: '100%', objectFit: 'contain' }} />
+              <button onClick={() => setUploadedImage(null)} style={{ position: 'absolute', top: '8px', right: '8px', background: 'rgba(0,0,0,0.5)', color: 'white', border: 'none', borderRadius: '50%', width: '24px', height: '24px', cursor: 'pointer' }}>×</button>
+            </>
+          ) : (
+            <>
+              <p style={{ margin: '0 0 16px 0', color: 'var(--color-text-muted)' }}>Upload a transparent PNG or clean signature image</p>
+              <input type="file" accept="image/*" onChange={(e) => {
+                const f = e.target.files?.[0];
+                if (f) {
+                  const reader = new FileReader();
+                  reader.onload = (re) => setUploadedImage(re.target?.result as string);
+                  reader.readAsDataURL(f);
+                }
+              }} style={{ display: 'none' }} id="sig-upload" />
+              <label htmlFor="sig-upload" style={{ background: 'var(--color-surface)', border: '1px solid var(--color-border)', padding: '8px 16px', borderRadius: 'var(--radius-md)', cursor: 'pointer', fontWeight: 500 }}>Select Image</label>
+            </>
+          )}
+        </div>
+      )}
+
+      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '16px', marginBottom: '-8px' }}>
+        <input type="checkbox" id="saveLocal" checked={saveToLocal} onChange={(e) => setSaveToLocal(e.target.checked)} />
+        <label htmlFor="saveLocal" style={{ fontSize: '13px', color: 'var(--color-text-dim)', cursor: 'pointer' }}>Save signature on this device for next time</label>
+      </div>
 
       <div className={styles.actions}>
         <button

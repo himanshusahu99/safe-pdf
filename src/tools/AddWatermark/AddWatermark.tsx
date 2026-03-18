@@ -5,18 +5,23 @@ import ProcessingLoader from '../../components/ProcessingLoader/ProcessingLoader
 import DownloadButton from '../../components/DownloadButton/DownloadButton';
 import PdfPreviewSidebar from '../../components/PdfPreviewSidebar/PdfPreviewSidebar';
 import ToolExplanation from '../../components/ToolExplanation/ToolExplanation';
+import PageSelector from '../../components/PageSelector/PageSelector';
 import { addWatermark } from '../../utils/pdfUtils';
 import { renderPageToCanvas } from '../../utils/renderUtils';
 import styles from '../shared/ToolShared.module.css';
+import AccordionSection from '../../components/AccordionSection/AccordionSection';
 
 export default function AddWatermark() {
   const [file, setFile] = useState<File | null>(null);
+  const [pageCount, setPageCount] = useState(0);
+  const [selectedPages, setSelectedPages] = useState<number[]>([]);
   const [text, setText] = useState('CONFIDENTIAL');
   const [fontSize, setFontSize] = useState(50);
   const [opacity, setOpacity] = useState(0.3);
   const [angle, setAngle] = useState(-45);
   const [color, setColor] = useState('#888888');
   const [fontWeight, setFontWeight] = useState<'normal' | 'bold'>('normal');
+  const [placement, setPlacement] = useState<'center' | 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right' | 'top-center' | 'bottom-center'>('center');
   const [previewBg, setPreviewBg] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [result, setResult] = useState<Uint8Array | null>(null);
@@ -29,6 +34,12 @@ export default function AddWatermark() {
     setResult(null);
     setError(null);
     try {
+      const { PDFDocument } = await import('pdf-lib');
+      const ab = await f.arrayBuffer();
+      const doc = await PDFDocument.load(ab, { ignoreEncryption: true });
+      const count = doc.getPageCount();
+      setPageCount(count);
+      setSelectedPages(Array.from({ length: count }, (_, i) => i + 1));
       const thumb = await renderPageToCanvas(f, 1, 0.6);
       setPreviewBg(thumb);
     } catch {}
@@ -39,7 +50,11 @@ export default function AddWatermark() {
     setIsProcessing(true);
     setError(null);
     try {
-      const watermarked = await addWatermark(file, text, { fontSize, opacity, rotation: angle, color, fontWeight });
+      // Convert 1-based selectedPages to 0-based indices; if all selected pass undefined (all pages)
+      const pageIndices = selectedPages.length === pageCount
+        ? undefined
+        : selectedPages.map(p => p - 1);
+      const watermarked = await addWatermark(file, text, { fontSize, opacity, rotation: angle, color, fontWeight, placement, pageIndices });
       setResult(watermarked);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to add watermark');
@@ -86,9 +101,10 @@ export default function AddWatermark() {
               <div style={{
                 position: 'absolute',
                 inset: 0,
+                padding: '20px',
                 display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
+                alignItems: placement.includes('top') ? 'flex-start' : placement.includes('bottom') ? 'flex-end' : 'center',
+                justifyContent: placement.includes('left') ? 'flex-start' : placement.includes('right') ? 'flex-end' : 'center',
                 pointerEvents: 'none',
               }}>
                 <span style={{
@@ -96,6 +112,7 @@ export default function AddWatermark() {
                   fontWeight: fontWeight === 'bold' ? 700 : 400,
                   color: hexToRgba(color, opacity),
                   transform: `rotate(${angle}deg)`,
+                  transformOrigin: 'center',
                   whiteSpace: 'nowrap',
                   userSelect: 'none',
                   letterSpacing: '2px',
@@ -105,11 +122,44 @@ export default function AddWatermark() {
               </div>
             </div>
 
+            {/* Page selection */}
+            {pageCount > 1 && (
+              <AccordionSection 
+                title="Select Pages" 
+                defaultOpen={false}
+                summaryText={selectedPages.length === pageCount ? "All Pages" : `${selectedPages.length} selected`}
+              >
+                <PageSelector
+                  file={file}
+                  pageCount={pageCount}
+                  selectedPages={selectedPages}
+                  onTogglePage={p => setSelectedPages(prev => prev.includes(p) ? prev.filter(x => x !== p) : [...prev, p])}
+                  onSelectAll={() => setSelectedPages(Array.from({ length: pageCount }, (_, i) => i + 1))}
+                  onDeselectAll={() => setSelectedPages([])}
+                />
+              </AccordionSection>
+            )}
+
             {/* Controls */}
-            <div className={styles.optionGroup}>
-              <label className={styles.optionLabel}>Watermark text:</label>
-              <input className={styles.optionInput} value={text} onChange={e => setText(e.target.value)} />
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '12px' }}>
+              <div className={styles.optionGroup} style={{ margin: 0 }}>
+                <label className={styles.optionLabel}>Watermark text:</label>
+                <input className={styles.optionInput} value={text} onChange={e => setText(e.target.value)} />
+              </div>
+              <div className={styles.optionGroup} style={{ margin: 0 }}>
+                <label className={styles.optionLabel}>Placement:</label>
+                <select value={placement} onChange={e => setPlacement(e.target.value as any)} className={styles.optionInput}>
+                  <option value="center">Center</option>
+                  <option value="top-left">Top Left</option>
+                  <option value="top-center">Top Center</option>
+                  <option value="top-right">Top Right</option>
+                  <option value="bottom-left">Bottom Left</option>
+                  <option value="bottom-center">Bottom Center</option>
+                  <option value="bottom-right">Bottom Right</option>
+                </select>
+              </div>
             </div>
+
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
               <div className={styles.optionGroup}>
                 <label className={styles.optionLabel}>Font size: {fontSize}px</label>
@@ -122,6 +172,10 @@ export default function AddWatermark() {
               <div className={styles.optionGroup}>
                 <label className={styles.optionLabel}>Angle: {angle}°</label>
                 <input type="range" min={-180} max={180} value={angle} onChange={e => setAngle(Number(e.target.value))} style={{ width: '100%', accentColor: 'var(--color-accent)' }} />
+                <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
+                  <button onClick={() => setAngle(0)} style={{ flex: 1, padding: '4px', fontSize: '12px', background: 'transparent', border: '1px solid var(--color-border)', borderRadius: '4px', cursor: 'pointer', color: angle === 0 ? 'var(--color-primary)' : 'var(--color-text)' }}>Horizontal</button>
+                  <button onClick={() => setAngle(-45)} style={{ flex: 1, padding: '4px', fontSize: '12px', background: 'transparent', border: '1px solid var(--color-border)', borderRadius: '4px', cursor: 'pointer', color: angle === -45 ? 'var(--color-primary)' : 'var(--color-text)' }}>Diagonal</button>
+                </div>
               </div>
               <div className={styles.optionGroup}>
                 <label className={styles.optionLabel}>Color:</label>
